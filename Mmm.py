@@ -1,4 +1,4 @@
-# Mmm: A simple terminal-based text editor
+#Mmm: A simple terminal-based text editor
 
 import sys, tty, termios
 
@@ -26,16 +26,24 @@ class Editor:
     def handle_input(self):
         getch = _GetchUnix()
         char = getch()
-        if char == chr(17):
+        if char == chr(17): #Ctrl+Q
             sys.stdout.write("\033[37;41mQUIT\033[39;49m\r\n")
             sys.exit(0)
+        elif char == chr(9): #Ctrl+H
+            sys.stdout.write("H")
+        elif char == chr(10): #Ctrl+J
+            sys.stdout.write("J")
+        elif char == chr(11): #Ctrl+K
+            sys.stdout.write("K")
+        elif char == chr(12): #Ctrl+L
+            sys.stdout.write("L")
                     
     def render(self):
         self._ansi.clear_screen()
         self._ansi.move_cursor(0, 0)
         self._buffer.render()
         self._ansi.move_cursor(self._cursor._row, self._cursor._col)
-        sys.stdout.flush() #cursor move is buffered if i dont do this :/
+        sys.stdout.flush() #Cursor move is buffered if i dont do this :/
         
 class Buffer:
     def __init__(self, lines):
@@ -44,7 +52,7 @@ class Buffer:
     def render(self):
         for line in self._lines:
             sys.stdout.write(line + "\r\n")
-            #sys.stdout.flush() #not required in raw mode apparently
+            #sys.stdout.flush() #Not required in raw mode apparently
             
 class Cursor:
     def __init__(self, row = 0, col = 0):
