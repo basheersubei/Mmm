@@ -45,6 +45,12 @@ class Editor:
         # Ctrl + L
         elif char == chr(12):
             self._cursor = self._cursor.right(self._buffer)
+        elif char == chr(40):
+            self._cursor = self._cursor.down(self._buffer)
+        # Tab key - Terminals see this as Ctrl + I, ASCII code 9
+        elif char == chr(9):
+            self._buffer = self._buffer.insert_tab_spaces(self._cursor._row, self._cursor._col)
+            self._cursor = self._cursor.move_to_col(self._cursor._col + 4)
         # Return key
         elif char == "\r":
             self.save_snapshot()
@@ -127,6 +133,12 @@ class Buffer:
         del lines[row]
         return Buffer(lines)
     
+    def insert_tab_spaces(self, row, col):
+        lines = copy.deepcopy(self._lines)
+        # Insert 4 spaces in place of the tab
+        lines[row] = lines[row][:col] + "    " + lines[row][col:]
+        return Buffer(lines)
+
 class Cursor:
     def __init__(self, row = 0, col = 0):
         self._row = row
@@ -153,7 +165,7 @@ class Cursor:
         return Cursor(self._row, self._col)
     
     def move_to_col(self, col):
-        return Cursor(self._row, 0)
+        return Cursor(self._row, col)
 
     def move_to_end(self, buffer):
         return Cursor(self._row, buffer.line_length(self._row))
