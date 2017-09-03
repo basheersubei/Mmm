@@ -1,6 +1,6 @@
 #Mmm: A simple terminal-based text editor
 
-import sys, tty, termios
+import sys, tty, termios, copy
 
 class Editor:
     def __init__(self):
@@ -36,6 +36,9 @@ class Editor:
             self._cursor = self._cursor.up(self._buffer)
         elif char == chr(12): # Ctrl+L
             self._cursor = self._cursor.right(self._buffer)
+        else:
+            self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
+            self._cursor = self._cursor.right(self._buffer)
                     
     def render(self):
         ANSI.clear_screen()
@@ -61,6 +64,16 @@ class Buffer:
     def line_length(self, row):
         return len(self._lines[row])
         
+    def insert(self, char, row, col):
+        # Duplicate the buffer state
+        #lines = []
+        #for line in self._lines:
+        #    lines.append(line)
+        lines = copy.deepcopy(self._lines)
+        # Insert the new char at the cursor position in the line
+        lines[row] = lines[row][:col] + char + lines[row][col:]
+        return Buffer(lines)
+
 class Cursor:
     def __init__(self, row = 0, col = 0):
         self._row = row
