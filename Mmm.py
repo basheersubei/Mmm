@@ -6,6 +6,7 @@ class Editor:
     def __init__(self):
         self._lines = []
         self._cursor = Cursor(1, 1)
+        self._history = []
         with open("test.txt") as lines:
             for line in lines:
                 self._lines.append(line.rstrip('\n'))      
@@ -29,10 +30,13 @@ class Editor:
         if char == chr(17):
             sys.stdout.write("\r\n\033[37;41m{}\033[39;49m\r\n".format("QUIT"))
             sys.exit(0)
+        # Ctrl + U
+        elif char == chr(21):
+            self.restore_snapshot()
         # Ctrl + H
         elif char == chr(8):
             self._cursor = self._cursor.left(self._buffer)
-        # Ctrl + J
+        # Ctrl + J`
         elif char == chr(10):
             self._cursor = self._cursor.down(self._buffer)
         # Ctrl + K
@@ -43,10 +47,12 @@ class Editor:
             self._cursor = self._cursor.right(self._buffer)
         # Return key
         elif char == "\r":
+            self.save_snapshot()
             self._buffer = self._buffer.split_line(self._cursor._row, self._cursor._col)
             self._cursor = self._cursor.down(self._buffer).move_to_col(0)
         # Backspace key
         elif char == chr(127): 
+            self.save_snapshot()
             if self._cursor._col > 0:
                 self._buffer = self._buffer.delete(self._cursor._row, self._cursor._col - 1)
                 self._cursor = self._cursor.left(self._buffer)
@@ -55,6 +61,7 @@ class Editor:
                 self._cursor = self._cursor.up(self._buffer).move_to_end(self._buffer)
                 self._buffer = self._buffer.shift_line_up(temp_cursor._row)
         else:
+            self.save_snapshot()
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
             self._cursor = self._cursor.right(self._buffer)
                     
@@ -64,8 +71,15 @@ class Editor:
         self._buffer.render()
         ANSI.move_cursor(self._cursor._row, self._cursor._col)
         # Cursor move is buffered if i dont do this :/
-        sys.stdout.flush() 
-        
+        sys.stdout.flush()
+
+    def save_snapshot(self):
+        self._history.append([self._buffer, self._cursor])
+
+    def restore_snapshot(self): 
+        if len(self._history):
+            self._buffer, self._cursor = self._history.pop()
+
 class Buffer:
     def __init__(self, lines):
         self._lines = lines
