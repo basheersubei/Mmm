@@ -27,7 +27,7 @@ class Editor:
         char = getch()
         # Ctrl + Q
         if char == chr(17):
-            sys.stdout.write("\033[37;41mQUIT\033[39;49m\r\n")
+            sys.stdout.write("\r\n\033[37;41m{}\033[39;49m\r\n".format("QUIT"))
             sys.exit(0)
         # Ctrl + H
         elif char == chr(8):
