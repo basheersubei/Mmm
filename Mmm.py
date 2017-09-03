@@ -42,7 +42,8 @@ class Editor:
         ANSI.move_cursor(0, 0)
         self._buffer.render()
         ANSI.move_cursor(self._cursor._row, self._cursor._col)
-        sys.stdout.flush() # Cursor move is buffered if i dont do this :/
+        # Cursor move is buffered if i dont do this :/
+        sys.stdout.flush() 
         
 class Buffer:
     def __init__(self, lines):
@@ -52,7 +53,14 @@ class Buffer:
         for line in self._lines:
             sys.stdout.write(line + "\r\n")
             #sys.stdout.flush() # Not required in raw mode apparently
-            
+    
+    @property
+    def line_count(self):
+        return len(self._lines)
+        
+    def line_length(self, row):
+        return len(self._lines[row])
+        
 class Cursor:
     def __init__(self, row = 0, col = 0):
         self._row = row
@@ -73,9 +81,9 @@ class Cursor:
     # Constrain cursor motion
     def clamp(self, buffer):
         # Prevent cursor motion beyond the last line
-        self._row = sorted((0, self._row, len(buffer._lines)-1))[1]
+        self._row = sorted((0, self._row, buffer.line_count-1))[1]
         # Prevent cursor motion beyond one space after the last char in a line
-        self._col = sorted((0, self._col, len(buffer._lines[self._row])))[1]
+        self._col = sorted((0, self._col, buffer.line_length(self._row)))[1]
         return Cursor(self._row, self._col)
         
 
