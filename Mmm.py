@@ -36,6 +36,10 @@ class Editor:
             self._cursor = self._cursor.up(self._buffer)
         elif char == chr(12): # Ctrl+L
             self._cursor = self._cursor.right(self._buffer)
+        elif char == chr(127): # Backspace key
+            if self._cursor._col > 0:
+                self._buffer = self._buffer.delete(self._cursor._row, self._cursor._col - 1)
+                self._cursor = self._cursor.left(self._buffer)
         else:
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
             self._cursor = self._cursor.right(self._buffer)
@@ -73,7 +77,13 @@ class Buffer:
         # Insert the new char at the cursor position in the line
         lines[row] = lines[row][:col] + char + lines[row][col:]
         return Buffer(lines)
-
+    
+    def delete(self, row, col):
+        lines = copy.deepcopy(self._lines)
+        # delete the char at the cursor position in the line
+        lines[row] = lines[row][:col] + lines[row][col+1:]
+        return Buffer(lines)
+    
 class Cursor:
     def __init__(self, row = 0, col = 0):
         self._row = row
