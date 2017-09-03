@@ -25,22 +25,31 @@ class Editor:
     def handle_input(self):
         getch = _GetchUnix()
         char = getch()
-        if char == chr(17): # Ctrl+Q
+        # Ctrl + Q
+        if char == chr(17):
             sys.stdout.write("\033[37;41mQUIT\033[39;49m\r\n")
             sys.exit(0)
-        elif char == chr(8): # Ctrl+H
+        # Ctrl + H
+        elif char == chr(8):
             self._cursor = self._cursor.left(self._buffer)
-        elif char == chr(10): # Ctrl+J
+        # Ctrl + J
+        elif char == chr(10):
             self._cursor = self._cursor.down(self._buffer)
-        elif char == chr(11): # Ctrl+K
+        # Ctrl + K
+        elif char == chr(11):
             self._cursor = self._cursor.up(self._buffer)
-        elif char == chr(12): # Ctrl+L
+        # Ctrl + L
+        elif char == chr(12):
             self._cursor = self._cursor.right(self._buffer)
-        elif char == chr(127): # Backspace key
+        # Return key
+        elif char == "\r":
+            self._buffer = self._buffer.split_line(self._cursor._row, self._cursor._col)
+            self._cursor = self._cursor.down(self._buffer).move_to_col(0)
+        # Backspace key
+        elif char == chr(127): 
                 self._buffer = self._buffer.delete(self._cursor._row, self._cursor._col, self._cursor)
                 if self._cursor._col > 0:
                     self._cursor = self._cursor.left(self._buffer)
-
         else:
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
             self._cursor = self._cursor.right(self._buffer)
@@ -91,6 +100,14 @@ class Buffer:
             del lines[row]
             cursor.move(row - 1, end_of_above_line)
         return Buffer(lines)
+
+    def split_line(self, row, col):
+        lines = copy.deepcopy(self._lines)
+        left_half = lines[row][:col]
+        right_half = lines[row][col:]
+        lines[row] = left_half
+        lines.insert(row + 1, right_half)
+        return Buffer(lines)
     
 class Cursor:
     def __init__(self, row = 0, col = 0):
@@ -121,7 +138,9 @@ class Cursor:
         # Prevent cursor motion beyond one space after the last char in a line
         self._col = sorted((0, self._col, buffer.line_length(self._row)))[1]
         return Cursor(self._row, self._col)
-        
+    
+    def move_to_col(self, col):
+        return Cursor(self._row, 0)
 
 class ANSI:
     def clear_screen():
