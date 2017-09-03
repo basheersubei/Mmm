@@ -47,9 +47,13 @@ class Editor:
             self._cursor = self._cursor.down(self._buffer).move_to_col(0)
         # Backspace key
         elif char == chr(127): 
-                self._buffer = self._buffer.delete(self._cursor._row, self._cursor._col, self._cursor)
-                if self._cursor._col > 0:
-                    self._cursor = self._cursor.left(self._buffer)
+            if self._cursor._col > 0:
+                self._buffer = self._buffer.delete(self._cursor._row, self._cursor._col - 1)
+                self._cursor = self._cursor.left(self._buffer)
+            elif self._cursor._col == 0 and self._cursor._row != 0:
+                temp_cursor = self._cursor
+                self._cursor = self._cursor.up(self._buffer).move_to_end(self._buffer)
+                self._buffer = self._buffer.shift_line_up(temp_cursor._row)
         else:
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
             self._cursor = self._cursor.right(self._buffer)
@@ -88,17 +92,10 @@ class Buffer:
         lines[row] = lines[row][:col] + char + lines[row][col:]
         return Buffer(lines)
     
-    def delete(self, row, col, cursor):
+    def delete(self, row, col):
         lines = copy.deepcopy(self._lines)
         # delete the char at the cursor position in the line
-        if col > 0:
-            lines[row] = lines[row][:col - 1] + lines[row][col:]
-
-        elif col == 0 and row != 0:
-            end_of_above_line = len(lines[row - 1]) + 1
-            lines[row - 1] = lines[row - 1] + lines[row]
-            del lines[row]
-            cursor.move(row - 1, end_of_above_line)
+        lines[row] = lines[row][:col] + lines[row][col+1:]
         return Buffer(lines)
 
     def split_line(self, row, col):
@@ -107,6 +104,13 @@ class Buffer:
         right_half = lines[row][col:]
         lines[row] = left_half
         lines.insert(row + 1, right_half)
+        return Buffer(lines)
+
+    def shift_line_up(self, row):
+        lines = copy.deepcopy(self._lines)
+        end_of_above_line = len(lines[row - 1]) + 1
+        lines[row - 1] = lines[row - 1] + lines[row]
+        del lines[row]
         return Buffer(lines)
     
 class Cursor:
@@ -125,11 +129,6 @@ class Cursor:
         
     def right(self, buffer):
         return Cursor(self._row, self._col + 1).clamp(buffer)
-
-    # TODO Implement this non destructively
-    def move(self, row, col):
-       self._row = row
-       self._col = col
     
     # Constrain cursor motion
     def clamp(self, buffer):
@@ -141,6 +140,9 @@ class Cursor:
     
     def move_to_col(self, col):
         return Cursor(self._row, 0)
+
+    def move_to_end(self, buffer):
+        return Cursor(self._row, buffer.line_length(self._row))
 
 class ANSI:
     def clear_screen():
