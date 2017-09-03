@@ -28,14 +28,14 @@ class Editor:
         if char == chr(17): # Ctrl+Q
             sys.stdout.write("\033[37;41mQUIT\033[39;49m\r\n")
             sys.exit(0)
-        elif char == chr(9): # Ctrl+H
-            sys.stdout.write("H")
+        elif char == chr(8): # Ctrl+H
+            self._cursor = self._cursor.left(self._buffer)
         elif char == chr(10): # Ctrl+J
-            sys.stdout.write("J")
+            self._cursor = self._cursor.down(self._buffer)
         elif char == chr(11): # Ctrl+K
-            sys.stdout.write("K")
+            self._cursor = self._cursor.up(self._buffer)
         elif char == chr(12): # Ctrl+L
-            sys.stdout.write("L")
+            self._cursor = self._cursor.right(self._buffer)
                     
     def render(self):
         ANSI.clear_screen()
@@ -57,6 +57,28 @@ class Cursor:
     def __init__(self, row = 0, col = 0):
         self._row = row
         self._col = col
+    
+    def left(self, buffer):
+        return Cursor(self._row, self._col - 1).clamp(buffer)
+    
+    def down(self, buffer):
+        return Cursor(self._row + 1, self._col).clamp(buffer)
+        
+    def up(self, buffer):
+        return Cursor(self._row -1, self._col).clamp(buffer)
+        
+    def right(self, buffer):
+        return Cursor(self._row, self._col + 1).clamp(buffer)
+    
+    # Constrain cursor motion
+    def clamp(self, buffer):
+        # Prevent cursor motion beyond the last line
+        self._row = sorted((0, self._row, len(buffer._lines)-1))[1]
+        # Prevent cursor motion beyond one space after the last char in a line
+        self._col = sorted((0, self._col, len(buffer._lines[self._row])))[1]
+        return Cursor(self._row, self._col)
+        
+
 
 class ANSI:
     def clear_screen():
