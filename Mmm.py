@@ -37,9 +37,10 @@ class Editor:
         elif char == chr(12): # Ctrl+L
             self._cursor = self._cursor.right(self._buffer)
         elif char == chr(127): # Backspace key
-            if self._cursor._col > 0:
-                self._buffer = self._buffer.delete(self._cursor._row, self._cursor._col - 1)
-                self._cursor = self._cursor.left(self._buffer)
+                self._buffer = self._buffer.delete(self._cursor._row, self._cursor._col, self._cursor)
+                if self._cursor._col > 0:
+                    self._cursor = self._cursor.left(self._buffer)
+
         else:
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
             self._cursor = self._cursor.right(self._buffer)
@@ -78,10 +79,17 @@ class Buffer:
         lines[row] = lines[row][:col] + char + lines[row][col:]
         return Buffer(lines)
     
-    def delete(self, row, col):
+    def delete(self, row, col, cursor):
         lines = copy.deepcopy(self._lines)
         # delete the char at the cursor position in the line
-        lines[row] = lines[row][:col] + lines[row][col+1:]
+        if col > 0:
+            lines[row] = lines[row][:col - 1] + lines[row][col:]
+
+        elif col == 0 and row != 0:
+            end_of_above_line = len(lines[row - 1]) + 1
+            lines[row - 1] = lines[row - 1] + lines[row]
+            del lines[row]
+            cursor.move(row - 1, end_of_above_line)
         return Buffer(lines)
     
 class Cursor:
@@ -96,10 +104,15 @@ class Cursor:
         return Cursor(self._row + 1, self._col).clamp(buffer)
         
     def up(self, buffer):
-        return Cursor(self._row -1, self._col).clamp(buffer)
+        return Cursor(self._row - 1, self._col).clamp(buffer)
         
     def right(self, buffer):
         return Cursor(self._row, self._col + 1).clamp(buffer)
+
+    # TODO Implement this non destructively
+    def move(self, row, col):
+       self._row = row
+       self._col = col
     
     # Constrain cursor motion
     def clamp(self, buffer):
@@ -109,7 +122,6 @@ class Cursor:
         self._col = sorted((0, self._col, buffer.line_length(self._row)))[1]
         return Cursor(self._row, self._col)
         
-
 
 class ANSI:
     def clear_screen():
