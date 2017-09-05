@@ -1,12 +1,15 @@
 #Mmm: A simple terminal-based text editor
 
-import sys, tty, termios, copy
+import sys, tty, termios, copy, shutil
 
 class Editor:
     def __init__(self):
         self._lines = []
-        self._cursor = Cursor(1, 1)
+        self._cursor = Cursor(0, 0)
         self._history = []
+        self._min_row = 0
+        self._terminal_dimensions = shutil.get_terminal_size()
+        self._max_row = self._terminal_dimensions.lines
         with open("test.txt") as lines:
             for line in lines:
                 self._lines.append(line.rstrip('\n'))      
@@ -36,7 +39,7 @@ class Editor:
         # Ctrl + H
         elif char == chr(8):
             self._cursor = self._cursor.left(self._buffer)
-        # Ctrl + J`
+        # Ctrl + J
         elif char == chr(10):
             self._cursor = self._cursor.down(self._buffer)
         # Ctrl + K
@@ -47,6 +50,17 @@ class Editor:
             self._cursor = self._cursor.right(self._buffer)
         elif char == chr(40):
             self._cursor = self._cursor.down(self._buffer)
+        # Ctrl + E
+        elif char == chr(5):
+            self._min_row += 1
+            self._max_row += 1
+            self._cursor = self._cursor.down(self._buffer)
+        # Ctrl + Y
+        elif char == chr(25):
+            self._min_row -= 1
+            self._max_row -= 1
+            self._cursor = self._cursor.up(self._buffer)        
+
         # Tab key - Terminals see this as Ctrl + I, ASCII code 9
         elif char == chr(9):
             self._buffer = self._buffer.insert_tab_spaces(self._cursor._row, self._cursor._col)
@@ -66,6 +80,7 @@ class Editor:
                 temp_cursor = self._cursor
                 self._cursor = self._cursor.up(self._buffer).move_to_end(self._buffer)
                 self._buffer = self._buffer.shift_line_up(temp_cursor._row)
+
         else:
             self.save_snapshot()
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
@@ -74,7 +89,7 @@ class Editor:
     def render(self):
         ANSI.clear_screen()
         ANSI.move_cursor(0, 0)
-        self._buffer.render()
+        self._buffer.render(self._min_row, self._max_row)
         ANSI.move_cursor(self._cursor._row, self._cursor._col)
         # Cursor move is buffered if i dont do this :/
         sys.stdout.flush()
@@ -90,9 +105,11 @@ class Buffer:
     def __init__(self, lines):
         self._lines = lines
     
-    def render(self):
-        for line in self._lines:
-            sys.stdout.write(line + "\r\n")
+    def render(self, min_row, max_row):
+        #sys.stdout.write("WHY ISN'T THIS GETTING DISPLAYED?\r\n")
+        for i in range(len(self._lines)):
+            if i in range(min_row, max_row):
+                sys.stdout.write(self._lines[i] + "\r\n")
             #sys.stdout.flush() # Not required in raw mode apparently
     
     @property
