@@ -9,7 +9,7 @@ class Editor:
         self._history = []
         self._min_row = 0
         self._terminal_dimensions = shutil.get_terminal_size()
-        self._max_row = self._terminal_dimensions.lines
+        self._max_row = self._terminal_dimensions.lines - 1
         with open("test.txt") as lines:
             for line in lines:
                 self._lines.append(line.rstrip('\n'))      
@@ -29,38 +29,35 @@ class Editor:
     def handle_input(self):
         getch = _GetchUnix()
         char = getch()
-        # Ctrl + Q
+        # Ctrl + Q : QUIT
         if char == chr(17):
             sys.stdout.write("\r\n\033[37;41m{}\033[39;49m\r\n\033[J".format("QUIT"))
             sys.exit(0)
-        # Ctrl + U
+        # Ctrl + U : UNDO
         elif char == chr(21):
             self.restore_snapshot()
-        # Ctrl + H
+        # Ctrl + H : MOVE CURSOR LEFT
         elif char == chr(8):
             self._cursor = self._cursor.left(self._buffer)
-        # Ctrl + J
+        # Ctrl + J : MOVE CURSOR DOWN
         elif char == chr(10):
             self._cursor = self._cursor.down(self._buffer)
-        # Ctrl + K
+        # Ctrl + K : MOVE CURSOR UP
         elif char == chr(11):
             self._cursor = self._cursor.up(self._buffer)
-        # Ctrl + L
+        # Ctrl + L : MOVE CURSOR RIGHT
         elif char == chr(12):
             self._cursor = self._cursor.right(self._buffer)
-        elif char == chr(40):
-            self._cursor = self._cursor.down(self._buffer)
-        # Ctrl + E
+        # Ctrl + E : SCROLL BUFFER DOWN
         elif char == chr(5):
-            self._min_row += 1
-            self._max_row += 1
-            self._cursor = self._cursor.down(self._buffer)
-        # Ctrl + Y
+            if self._max_row < len(self._buffer._lines):
+                self._min_row += 1
+                self._max_row += 1
+        # Ctrl + Y : SCROLL BUFFER UP
         elif char == chr(25):
-            self._min_row -= 1
-            self._max_row -= 1
-            self._cursor = self._cursor.up(self._buffer)        
-
+            if self._min_row > 0:
+                self._min_row -= 1
+                self._max_row -= 1
         # Tab key - Terminals see this as Ctrl + I, ASCII code 9
         elif char == chr(9):
             self._buffer = self._buffer.insert_tab_spaces(self._cursor._row, self._cursor._col)
@@ -80,7 +77,6 @@ class Editor:
                 temp_cursor = self._cursor
                 self._cursor = self._cursor.up(self._buffer).move_to_end(self._buffer)
                 self._buffer = self._buffer.shift_line_up(temp_cursor._row)
-
         else:
             self.save_snapshot()
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
