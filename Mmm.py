@@ -16,21 +16,26 @@ class Editor:
         self._buffer = Buffer(self._lines)
 
     def run(self):
+        # Save previous terminal file descriptor settings and start raw mode
         self.fd = sys.stdin.fileno()
         self.old_settings = termios.tcgetattr(self.fd)
         try:
             tty.setraw(sys.stdin.fileno())
+            # Main loop
             while 1:
                 self.render()
                 self.handle_input()
+        # Return terminal to previous file descriptor settings
         finally:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self.old_settings)
 
     def handle_input(self):
+        # Get a single char input
         getch = _GetchUnix()
         char = getch()
         # Ctrl + Q : QUIT
         if char == chr(17):
+            # Output QUIT with white fg color, red bg, and clear screen below then quit
             sys.stdout.write("\r\n\033[37;41m{}\033[39;49m\r\n\033[J".format("QUIT"))
             sys.exit(0)
         # Ctrl + U : UNDO
@@ -77,6 +82,7 @@ class Editor:
                 temp_cursor = self._cursor
                 self._cursor = self._cursor.up(self._buffer).move_to_end(self._buffer)
                 self._buffer = self._buffer.shift_line_up(temp_cursor._row)
+        # Any other input:
         else:
             self.save_snapshot()
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
@@ -102,7 +108,6 @@ class Buffer:
         self._lines = lines
     
     def render(self, min_row, max_row):
-        #sys.stdout.write("WHY ISN'T THIS GETTING DISPLAYED?\r\n")
         for i in range(len(self._lines)):
             if i in range(min_row, max_row):
                 sys.stdout.write(self._lines[i] + "\r\n")
