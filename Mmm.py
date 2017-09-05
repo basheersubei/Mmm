@@ -31,7 +31,7 @@ class Editor:
         char = getch()
         # Ctrl + Q
         if char == chr(17):
-            sys.stdout.write("\r\n\033[37;41m{}\033[39;49m\r\n".format("QUIT"))
+            sys.stdout.write("\r\n\033[37;41m{}\033[39;49m\r\n\033[J".format("QUIT"))
             sys.exit(0)
         # Ctrl + U
         elif char == chr(21):
@@ -197,13 +197,7 @@ class ANSI:
 # Gets a single char input. Code copied from StackOverflow
 class _GetchUnix:
     def __call__(self):
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        ch = sys.stdin.read(1)
         return ch
 
 e = Editor()
