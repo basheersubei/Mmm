@@ -120,6 +120,8 @@ class Buffer:
     def render(self, min_row, max_row):
         for i in range(self.line_count):
             if i in range(min_row, max_row):
+                # TODO dynamically format the leading 0's based on line count
+                print("\033[37;44m{num:02d}\033[39;49m  ".format(num = i), end="")
                 sys.stdout.write(self._lines[i] + "\r\n")
             #sys.stdout.flush() # Not required in raw mode apparently
     
@@ -173,16 +175,16 @@ class Cursor:
         self._col = col
     
     def left(self, buffer):
-        return Cursor(self._row, self._col - 1).clamp(buffer)
+        return Cursor(self._row, self._col - 1)
     
     def down(self, buffer):
-        return Cursor(self._row + 1, self._col).clamp(buffer)
+        return Cursor(self._row + 1, self._col)
         
     def up(self, buffer):
-        return Cursor(self._row - 1, self._col).clamp(buffer)
+        return Cursor(self._row - 1, self._col)
         
     def right(self, buffer):
-        return Cursor(self._row, self._col + 1).clamp(buffer)
+        return Cursor(self._row, self._col + 1)
     
     # Constrain cursor motion
     def clamp(self, buffer):
