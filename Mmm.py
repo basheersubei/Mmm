@@ -108,7 +108,7 @@ class Buffer:
         self._lines = lines
     
     def render(self, min_row, max_row):
-        for i in range(len(self._lines)):
+        for i in range(self.line_count):
             if i in range(min_row, max_row):
                 sys.stdout.write(self._lines[i] + "\r\n")
             #sys.stdout.flush() # Not required in raw mode apparently
@@ -176,8 +176,9 @@ class Cursor:
     
     # Constrain cursor motion
     def clamp(self, buffer):
+        bottom_row = shutil.get_terminal_size().lines - 2
         # Prevent cursor motion beyond the last line
-        self._row = sorted((0, self._row, buffer.line_count-1))[1]
+        self._row = sorted((0, self._row, bottom_row))[1]
         # Prevent cursor motion beyond one space after the last char in a line
         self._col = sorted((0, self._col, buffer.line_length(self._row)))[1]
         return Cursor(self._row, self._col)
