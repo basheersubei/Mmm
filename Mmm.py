@@ -92,7 +92,7 @@ class Editor:
         ANSI.clear_screen()
         ANSI.move_cursor(0, 0)
         self._buffer.render(self._min_row, self._max_row)
-        ANSI.move_cursor(self._cursor._row, self._cursor._col)
+        ANSI.move_cursor(self._cursor._row, self._cursor._col+3)
         # Cursor move is buffered if i dont do this :/
         sys.stdout.flush()
 
@@ -121,7 +121,7 @@ class Buffer:
         for i in range(self.line_count):
             if i in range(min_row, max_row):
                 # TODO dynamically format the leading 0's based on line count
-                print("\033[37;44m{num:02d}\033[39;49m  ".format(num = i), end="")
+                print("\033[37;44m{num:02d}\033[39;49m ".format(num = i), end="")
                 sys.stdout.write(self._lines[i] + "\r\n")
             #sys.stdout.flush() # Not required in raw mode apparently
     
@@ -175,16 +175,16 @@ class Cursor:
         self._col = col
     
     def left(self, buffer):
-        return Cursor(self._row, self._col - 1)
+        return Cursor(self._row, self._col - 1).clamp(buffer)
     
     def down(self, buffer):
-        return Cursor(self._row + 1, self._col)
+        return Cursor(self._row + 1, self._col).clamp(buffer)
         
     def up(self, buffer):
-        return Cursor(self._row - 1, self._col)
+        return Cursor(self._row - 1, self._col).clamp(buffer)
         
     def right(self, buffer):
-        return Cursor(self._row, self._col + 1)
+        return Cursor(self._row, self._col + 1).clamp(buffer)
     
     # Constrain cursor motion
     def clamp(self, buffer):
