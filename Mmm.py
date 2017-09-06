@@ -91,7 +91,7 @@ class Editor:
     def render(self):
         ANSI.clear_screen()
         ANSI.move_cursor(0, 0)
-        self._buffer.render(self._min_row, self._max_row)
+        self._buffer.render(self._min_row, self._max_row, self._cursor)
         ANSI.move_cursor(self._cursor._row, self._cursor._col+3)
         # Cursor move is buffered if i dont do this :/
         sys.stdout.flush()
@@ -117,11 +117,15 @@ class Buffer:
     def __init__(self, lines):
         self._lines = lines
     
-    def render(self, min_row, max_row):
+    def render(self, min_row, max_row, cursor):
         for i in range(self.line_count):
             if i in range(min_row, max_row):
-                # TODO dynamically format the leading 0's based on line count
-                print("\033[37;44m{num:02d}\033[39;49m ".format(num = i), end="")
+                if i == cursor._row:
+                    # TODO dynamically format the leading 0's based on line count
+                    print("\033[37;42m{num:02d}\033[39;49m ".format(num = i), end="")
+                else:
+                    # TODO dynamically format the leading 0's based on line count
+                    print("\033[37;44m{num:02d}\033[39;49m ".format(num = i), end="")
                 sys.stdout.write(self._lines[i] + "\r\n")
             #sys.stdout.flush() # Not required in raw mode apparently
     
@@ -133,10 +137,6 @@ class Buffer:
         return len(self._lines[row])
         
     def insert(self, char, row, col):
-        # Duplicate the buffer state
-        #lines = []
-        #for line in self._lines:
-        #    lines.append(line)
         lines = copy.deepcopy(self._lines)
         # Insert the new char at the cursor position in the line
         lines[row] = lines[row][:col] + char + lines[row][col:]
