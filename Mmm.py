@@ -47,22 +47,22 @@ class Editor:
         # Ctrl + J : MOVE CURSOR DOWN
         elif char == chr(10):
             self._cursor = self._cursor.down(self._buffer)
+            if self._cursor._row == shutil.get_terminal_size().lines - 2:
+                self.scroll_down()
         # Ctrl + K : MOVE CURSOR UP
         elif char == chr(11):
             self._cursor = self._cursor.up(self._buffer)
+            if self._cursor._row == 0:
+                self.scroll_up()
         # Ctrl + L : MOVE CURSOR RIGHT
         elif char == chr(12):
             self._cursor = self._cursor.right(self._buffer)
         # Ctrl + E : SCROLL BUFFER DOWN
         elif char == chr(5):
-            if self._max_row < len(self._buffer._lines):
-                self._min_row += 1
-                self._max_row += 1
+            self.scroll_down()
         # Ctrl + Y : SCROLL BUFFER UP
         elif char == chr(25):
-            if self._min_row > 0:
-                self._min_row -= 1
-                self._max_row -= 1
+            self.scroll_up()
         # Tab key - Terminals see this as Ctrl + I, ASCII code 9
         elif char == chr(9):
             self._buffer = self._buffer.insert_tab_spaces(self._cursor._row, self._cursor._col)
@@ -102,6 +102,16 @@ class Editor:
     def restore_snapshot(self): 
         if len(self._history):
             self._buffer, self._cursor = self._history.pop()
+
+    def scroll_up(self):
+        if self._min_row > 0:
+            self._min_row -= 1
+            self._max_row -= 1
+
+    def scroll_down(self):
+        if self._max_row < self._buffer.line_count:
+            self._min_row += 1
+            self._max_row += 1
 
 class Buffer:
     def __init__(self, lines):
