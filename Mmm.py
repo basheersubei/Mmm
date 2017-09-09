@@ -90,6 +90,10 @@ class Editor:
         # Any other input:
         else:
             self.save_snapshot()
+            # TODO cursor bug is right here!
+            # The cursor position doesn't change when the screen scrolls up, but it SHOULD change where you place things in the buffer!
+            # You're supposed to have a "visual cursor" (like you do right now, which works perfectly), and then a "buffer cursor" that
+            # keeps track of where in the buffer to insert new text.
             self._buffer = self._buffer.insert(char, self._cursor._row, self._cursor._col) 
             self._cursor = self._cursor.right(self._buffer)
                     
