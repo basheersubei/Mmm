@@ -2,6 +2,11 @@
 
 import sys, tty, termios, copy, shutil
 
+NUM_SPACES_PER_TAB = 4
+
+COLOR_GREEN_HIGHLIGHT = '42m'
+COLOR_BLUE_HIGHLIGHT = '44m'
+
 class Editor:
     def __init__(self):
         self._lines = []
@@ -121,11 +126,11 @@ class Buffer:
         for i in range(self.line_count):
             if i in range(min_row, max_row):
                 if i == cursor._row:
-                    # TODO dynamically format the leading 0's based on line count
-                    print("\033[37;42m{num:02d}\033[39;49m ".format(num = i), end="")
+                    color = COLOR_GREEN_HIGHLIGHT
                 else:
-                    # TODO dynamically format the leading 0's based on line count
-                    print("\033[37;44m{num:02d}\033[39;49m ".format(num = i), end="")
+                    color = COLOR_BLUE_HIGHLIGHT
+                # TODO dynamically format the leading 0's based on line count
+                print("\033[37;{color}{num:02d}\033[39;49m ".format(color=color,num = i), end="")
                 sys.stdout.write(self._lines[i] + "\r\n")
             #sys.stdout.flush() # Not required in raw mode apparently
     
@@ -166,7 +171,7 @@ class Buffer:
     def insert_tab_spaces(self, row, col):
         lines = copy.deepcopy(self._lines)
         # Insert 4 spaces in place of the tab
-        lines[row] = lines[row][:col] + "    " + lines[row][col:]
+        lines[row] = lines[row][:col] + (' ' * NUM_SPACES_PER_TAB) + lines[row][col:]
         return Buffer(lines)
 
 class Cursor:
@@ -190,10 +195,10 @@ class Cursor:
     def clamp(self, buffer):
         bottom_row = shutil.get_terminal_size().lines - 2
         # Prevent cursor motion beyond the last line
-        self._row = sorted((0, self._row, bottom_row))[1]
+        row = sorted((0, self._row, bottom_row))[1]
         # Prevent cursor motion beyond one space after the last char in a line
-        self._col = sorted((0, self._col, buffer.line_length(self._row)))[1]
-        return Cursor(self._row, self._col)
+        col = sorted((0, self._col, buffer.line_length(self._row)))[1]
+        return Cursor(row, col)
     
     def move_to_col(self, col):
         return Cursor(self._row, col)
